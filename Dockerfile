@@ -36,6 +36,9 @@ RUN curl -fsSL -o piwik.tar.gz \
 RUN curl -fsSL -o "$PIWIK_HOME/misc/GeoIPCity.dat.gz" http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz \
  && gunzip "$PIWIK_HOME/misc/GeoIPCity.dat.gz"
 
-#COPY config.ini.php "/var/www/html/config/config.ini.php"
+RUN mkdir /config \
+ && ln -s /config/config.ini.php "$PIWIK_HOME/config/config.ini.php"
 
-#VOLUME "/var/www/html/tmp"
+COPY config.ini.php "/config/config.ini.php"
+
+VOLUME "/var/www/html/tmp"
