@@ -18,6 +18,9 @@ RUN docker-php-ext-configure gd --with-freetype-dir=/usr --with-png-dir=/usr --w
 RUN pecl install APCu geoip
 
 ENV PIWIK_VERSION 3.0.2
+ENV PIWIK_HOME /var/www/html
+
+COPY php.ini /usr/local/etc/php/php.ini
 
 RUN curl -fsSL -o piwik.tar.gz \
       "https://builds.piwik.org/piwik-${PIWIK_VERSION}.tar.gz" \
@@ -27,19 +30,12 @@ RUN curl -fsSL -o piwik.tar.gz \
  && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys 814E346FA01A20DBB04B6807B5DBD5925590A237 \
  && gpg --batch --verify piwik.tar.gz.asc piwik.tar.gz \
  && rm -r "$GNUPGHOME" piwik.tar.gz.asc \
- && tar -xzf piwik.tar.gz -C /usr/src/ \
+ && tar -xzf piwik.tar.gz -C "$PIWIK_HOME" --strip-components=1 \
  && rm piwik.tar.gz
 
-COPY php.ini /usr/local/etc/php/php.ini
+RUN curl -fsSL -o "$PIWIK_HOME/misc/GeoIPCity.dat.gz" http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz \
+ && gunzip "$PIWIK_HOME/misc/GeoIPCity.dat.gz"
 
-RUN curl -fsSL -o /usr/src/piwik/misc/GeoIPCity.dat.gz http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz \
- && gunzip /usr/src/piwik/misc/GeoIPCity.dat.gz
+#COPY config.ini.php "/var/www/html/config/config.ini.php"
 
-COPY docker-entrypoint.sh /entrypoint.sh
-
-# WORKDIR is /var/www/html (inherited via "FROM php")
-# "/entrypoint.sh" will populate it at container startup from /usr/src/piwik
-VOLUME /var/www/html
-
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["php-fpm"]
+#VOLUME "/var/www/html/tmp"
